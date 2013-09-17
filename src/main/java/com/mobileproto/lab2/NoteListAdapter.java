@@ -12,14 +12,15 @@ import android.widget.TextView;
 import java.util.List;
 
 /**
- * Created by evan on 9/15/13.
+ * Created by chris on 9/15/13.
  */
 public class NoteListAdapter extends ArrayAdapter {
 
-    private List<String> data;
+    private List<Note> data;
     private Activity activity;
+    private DBHandler dbhandler;
 
-    public NoteListAdapter(Activity a, int viewResourceId, List<String> data){
+    public NoteListAdapter(Activity a, int viewResourceId, List<Note> data){
         super(a, viewResourceId, data);
         this.data = data;
         this.activity = a;
@@ -35,13 +36,15 @@ public class NoteListAdapter extends ArrayAdapter {
 
         ImageButton del = (ImageButton) v.findViewById(R.id.deleteButton);
         final TextView name = (TextView) v.findViewById(R.id.titleTextView);
-        name.setText(data.get(position));
+        name.setText(data.get(position).getTitle());
 
         del.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String fileName = name.getText().toString();
-                activity.deleteFile(fileName);
+                dbhandler = new DBHandler(view.getContext());
+                dbhandler.open();
+                
+                dbhandler.deleteNote(data.get(position));
                 data.remove(position);
                 NoteListAdapter.this.notifyDataSetChanged();
             }

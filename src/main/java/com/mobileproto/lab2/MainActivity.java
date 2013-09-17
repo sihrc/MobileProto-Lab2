@@ -19,21 +19,21 @@ import java.util.Arrays;
 import java.util.List;
 
 public class MainActivity extends Activity {
-
+    private DBHandler dbhandler;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         final TextView title = (TextView) findViewById(R.id.titleField);
-
-
         final TextView note = (TextView) findViewById(R.id.noteField);
 
+        dbhandler = new DBHandler(this);
+        dbhandler.open();
 
-        List<String> files = new ArrayList<String>(Arrays.asList(fileList()));
+        List<Note> notesAll = dbhandler.getAllNotes();
 
-        final NoteListAdapter aa = new NoteListAdapter(this, android.R.layout.simple_list_item_1, files);
+        final NoteListAdapter aa = new NoteListAdapter(this, android.R.layout.simple_list_item_1, notesAll);
 
         final ListView notes = (ListView) findViewById(R.id.noteList);
 
@@ -46,22 +46,16 @@ public class MainActivity extends Activity {
         save.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String fileName = title.getText().toString();
+                String noteTitle = title.getText().toString();
                 String noteText = note.getText().toString();
-                if (fileName != null && noteText != null){
-                    try{
-                        FileOutputStream fos = openFileOutput(fileName, Context.MODE_PRIVATE);
-                        fos.write(noteText.getBytes());
-                        fos.close();
-                        title.setText("");
-                        note.setText("");
-                        aa.insert(fileName,0);
-                        aa.notifyDataSetChanged();
-                    }catch (IOException e){
-                        Log.e("IOException", e.getMessage());
+                if (noteTitle != null && noteText != null){
+                    Note curNote = dbhandler.createNote(noteTitle, noteText);
+                    title.setText("");
+                    note.setText("");
+                    aa.insert(curNote,0);
+                    aa.notifyDataSetChanged();
                     }
                 }
-            }
         });
 
         save.setFocusable(false);
@@ -69,10 +63,12 @@ public class MainActivity extends Activity {
         notes.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                final TextView title = (TextView) view.findViewById(R.id.titleTextView);
-                String fileName = title.getText().toString();
+                Note thisNote = dbhandler.getAllNotes().get(i);
                 Intent in = new Intent(getApplicationContext(), NoteDetailActivity.class);
-                in.putExtra("file", fileName);
+                String noteTitle = thisNote.getTitle();
+                String noteText = thisNote.getText();
+                in.putExtra("title", noteTitle);
+                in.putExtra("text", noteText);
                 startActivity(in);
             }
         });
